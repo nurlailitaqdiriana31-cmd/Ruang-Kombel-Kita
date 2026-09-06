@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SI-KOMBEL - Portal Komunitas Belajar SD Negeri 3 Kuala Pembuang I</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for visual analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Hidden Input File for Data Import -->
+    <input type="file" id="import-file-input" accept=".json" class="hidden" onchange="importData(event)">
+
+    <!-- Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo & Brand -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                        <i class="fa-solid fa-school"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-900 leading-tight">SI-KOMBEL</h1>
+                        <p class="text-xs text-slate-500 font-semibold">SD NEGERI 3 KUALA PEMBUANG I</p>
+                    </div>
+                </div>
+
+                <!-- User Profile & Data Actions -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button onclick="exportData()" title="Bagikan / Cadangkan Data Aplikasi" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 py-2 rounded-lg transition-all border border-slate-300">
+                        <i class="fa-solid fa-download text-brand-600"></i> <span class="hidden md:inline">Ekspor Data</span>
+                    </button>
+                    <button onclick="document.getElementById('import-file-input').click()" title="Muat Data Aplikasi dari Berkas" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 py-2 rounded-lg transition-all border border-slate-300">
+                        <i class="fa-solid fa-upload text-indigo-600"></i> <span class="hidden md:inline">Impor Data</span>
+                    </button>
+
+                    <button onclick="openModal('modal-presensi-cepat')" class="hidden sm:flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all shadow-sm">
+                        <i class="fa-solid fa-qrcode"></i> Presensi Sekarang
+                    </button>
+                    
+                    <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+
+                    <div class="flex items-center gap-2.5 bg-slate-100 py-1.5 px-3 rounded-full border border-slate-200">
+                        <div class="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </div>
+                        <div class="text-left hidden md:block">
+                            <p class="text-xs font-semibold text-slate-800" id="header-user-name">Pengelola Portal</p>
+                            <p class="text-[10px] text-slate-500">Ketua Kombel / Guru</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-slate-900 text-slate-300">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex space-x-1 overflow-x-auto py-2 text-xs font-medium no-scrollbar" id="nav-tabs">
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-btn active flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white font-semibold whitespace-nowrap transition">
+                        <i class="fa-solid fa-chart-line"></i> Dashboard & Monitoring
+                    </button>
+                    <button onclick="switchTab('guru')" id="tab-guru" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-800 hover:text-white whitespace-nowrap transition">
+                        <i class="fa-solid fa-id-card-clip"></i> Data Guru & GTK
+                    </button>
+                    <button onclick="switchTab('files')" id="tab-files" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-800 hover:text-white whitespace-nowrap transition">
+                        <i class="fa-solid fa-folder-open"></i> Bank Perangkat Ajar SD
+                    </button>
+                    <button onclick="switchTab('jadwal')" id="tab-jadwal" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-800 hover:text-white whitespace-nowrap transition">
+                        <i class="fa-solid fa-calendar-days"></i> Jadwal & Rundown Pertemuan
+                    </button>
+                    <button onclick="switchTab('presensi')" id="tab-presensi" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-800 hover:text-white whitespace-nowrap transition">
+                        <i class="fa-solid fa-clipboard-user"></i> Presensi Otomatis
+                    </button>
+                    <button onclick="switchTab('refleksi')" id="tab-refleksi" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-800 hover:text-white whitespace-nowrap transition">
+                        <i class="fa-solid fa-comments"></i> Refleksi & RTL Kombel
+                    </button>
+                    <button onclick="switchTab('info')" id="tab-info" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-800 hover:text-white whitespace-nowrap transition">
+                        <i class="fa-solid fa-newspaper"></i> Info Edukasi & PMM
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ==================== TAB 1: DASHBOARD & MONITORING ==================== -->
+        <section id="sec-dashboard" class="tab-content space-y-6">
+            <!-- School Header Banner -->
+            <div class="bg-gradient-to-r from-brand-800 via-indigo-700 to-blue-600 text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">Portal Resmi Kombel Sekolah</span>
+                    <h2 class="text-xl font-bold mt-1">Komunitas Belajar SD Negeri 3 Kuala Pembuang I</h2>
+                    <p class="text-xs text-indigo-100 mt-1">Wadah kolaborasi guru dalam penyusunan modul ajar, asesmen Kurikulum Merdeka, dan pengelolaan kinerja PMM.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="switchTab('files')" class="bg-white text-brand-800 font-semibold text-xs px-4 py-2.5 rounded-xl hover:bg-slate-100 transition shadow">
+                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Bagikan Perangkat Ajar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Metrics Header -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Guru & GTK</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="dash-total-guru">0 Guru</h3>
+                        <p class="text-[11px] text-emerald-600 font-medium"><i class="fa-solid fa-check"></i> Terdaftar</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pertemuan Kombel</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="dash-total-jadwal">0 Sesi</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Agenda Terjadwal</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Berkas Pembelajaran</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="stat-total-files">0 Dokumen</h3>
+                        <p class="text-[11px] text-purple-600 font-medium">Modul, LKPD, Asesmen</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-chart-user"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Presensi Masuk</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="dash-total-presensi">0 Data</h3>
+                        <p class="text-[11px] text-emerald-600 font-medium"><i class="fa-solid fa-circle-check"></i> Catatan Hadir</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitoring Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Activity Feed (2 Cols) -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base">Pantauan Aktivitas Kombel SDN 3 Kuala Pembuang I</h3>
+                                <p class="text-xs text-slate-500">Transparansi kegiatan berbagi praktik baik antar guru kelas & guru mata pelajaran</p>
+                            </div>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Active
+                            </span>
+                        </div>
+
+                        <!-- Timeline Feed -->
+                        <div class="space-y-4 relative before:absolute before:inset-0 before:left-4 before:w-0.5 before:bg-slate-100" id="dashboard-activity-list">
+                            <!-- Items inserted dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar Widget -->
+                <div class="space-y-6">
+                    <!-- Chart Widget -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-800 text-sm mb-1">Kontribusi Berkas Per Fase / Kelas</h4>
+                        <p class="text-xs text-slate-500 mb-4">Persentase dokumen Kurikulum Merdeka</p>
+                        <div class="relative h-48">
+                            <canvas id="chartPartisipasi"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Agenda Kombel Terdekat Card -->
+                    <div class="bg-gradient-to-br from-brand-700 to-indigo-900 text-white p-5 rounded-2xl shadow-md relative overflow-hidden" id="dash-upcoming-card">
+                        <div class="absolute top-0 right-0 -mt-2 -mr-2 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                        <span class="bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">Pertemuan Mendatang</span>
+                        <h4 class="font-bold text-lg mt-3" id="dash-upcoming-topik">Belum ada agenda mendatang</h4>
+                        <p class="text-xs text-indigo-100 mt-1" id="dash-upcoming-time"><i class="fa-regular fa-clock mr-1"></i> Silakan buat agenda pada menu Jadwal</p>
+                        <p class="text-xs text-indigo-200 mt-2" id="dash-upcoming-lokasi"><i class="fa-solid fa-location-dot mr-1"></i> -</p>
+                        <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
+                            <span class="text-xs text-indigo-200" id="dash-upcoming-host">Host: -</span>
+                            <button onclick="switchTab('jadwal')" class="bg-white text-brand-700 font-semibold text-xs px-3 py-1.5 rounded-lg hover:bg-slate-100 transition">
+                                Kelola Jadwal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB GURU: DATA GURU & GTK ==================== -->
+        <section id="sec-guru" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Direktori & Identitas Guru / GTK</h2>
+                    <p class="text-xs text-slate-500">Pendataan resmi Tenaga Pendidik dan Kependidikan SD Negeri 3 Kuala Pembuang I yang terdaftar dalam Komunitas Belajar.</p>
+                </div>
+                <button onclick="openModalTambahGuru()" class="w-full md:w-auto bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> Tambah Identitas Guru
+                </button>
+            </div>
+
+            <!-- Stats Bar Guru -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-[10px] uppercase font-bold text-slate-400">Total Terdaftar</p>
+                    <h4 class="text-xl font-bold text-slate-800 mt-0.5" id="stat-guru-total">0 Guru</h4>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-[10px] uppercase font-bold text-slate-400">Guru PNS / PPPK</p>
+                    <h4 class="text-xl font-bold text-emerald-600 mt-0.5" id="stat-guru-asn">0 Orang</h4>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-[10px] uppercase font-bold text-slate-400">Guru Honorer / GTT</p>
+                    <h4 class="text-xl font-bold text-amber-600 mt-0.5" id="stat-guru-gtt">0 Orang</h4>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-[10px] uppercase font-bold text-slate-400">Pengurus Kombel</p>
+                    <h4 class="text-xl font-bold text-brand-600 mt-0.5" id="stat-guru-pengurus">0 Orang</h4>
+                </div>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="relative sm:col-span-2">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="search-guru" oninput="filterGuru()" placeholder="Cari Nama Guru, NIP, atau Tugas Mengajar..." class="w-full bg-white text-xs border border-slate-200 pl-9 pr-3 py-2.5 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <select id="filter-guru-status" onchange="filterGuru()" class="bg-white text-xs border border-slate-200 px-3 py-2.5 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    <option value="ALL">Semua Status Kepegawaian</option>
+                    <option value="PNS">PNS</option>
+                    <option value="PPPK">PPPK</option>
+                    <option value="GTT / Honorer">GTT / Honorer</option>
+                    <option value="PTT">PTT / Tenaga Kependidikan</option>
+                </select>
+            </div>
+
+            <!-- Cards Grid for Guru -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="guru-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: BANK BERKAS & PERANGKAT AJAR ==================== -->
+        <section id="sec-files" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Bank Perangkat Ajar & Media Pembelajaran SD</h2>
+                    <p class="text-xs text-slate-500">Tempat saling berbagi Modul Ajar, Capaian Pembelajaran (CP), TP, Media Interaktif, LKPD, dan Soal Asesmen SD.</p>
+                </div>
+                <button onclick="openModal('modal-upload-file')" class="w-full md:w-auto bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Unggah Berkas Baru
+                </button>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="search-file" oninput="filterFiles()" placeholder="Cari nama berkas / uploader..." class="w-full bg-white text-xs border border-slate-200 pl-9 pr-3 py-2.5 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <select id="filter-mapel" onchange="filterFiles()" class="bg-white text-xs border border-slate-200 px-3 py-2.5 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    <option value="ALL">Semua Mata Pelajaran / Kelas</option>
+                    <option value="Guru Kelas (Fase A)">Guru Kelas (Fase A: Kelas 1-2)</option>
+                    <option value="Guru Kelas (Fase B)">Guru Kelas (Fase B: Kelas 3-4)</option>
+                    <option value="Guru Kelas (Fase C)">Guru Kelas (Fase C: Kelas 5-6)</option>
+                    <option value="IPAS SD">IPAS SD</option>
+                    <option value="Matematika SD">Matematika SD</option>
+                    <option value="Bahasa Indonesia SD">Bahasa Indonesia SD</option>
+                    <option value="Pendidikan Pancasila">Pendidikan Pancasila</option>
+                    <option value="PJOK & Agama">PJOK & Agama</option>
+                </select>
+                <select id="filter-format" onchange="filterFiles()" class="bg-white text-xs border border-slate-200 px-3 py-2.5 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    <option value="ALL">Semua Format File</option>
+                    <option value="pdf">PDF Document (.pdf)</option>
+                    <option value="word">Word Document (.docx)</option>
+                    <option value="ppt">PowerPoint Presentation (.pptx)</option>
+                    <option value="sheet">Excel / Spreadsheet (.xlsx)</option>
+                    <option value="link">Tautan Drive / Cloud</option>
+                </select>
+                <select id="filter-jenis" onchange="filterFiles()" class="bg-white text-xs border border-slate-200 px-3 py-2.5 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    <option value="ALL">Semua Jenis Dokumen</option>
+                    <option value="Modul Ajar / RPP">Modul Ajar / RPP</option>
+                    <option value="Bahan Presentasi">Bahan Presentasi / PPT</option>
+                    <option value="Asesmen & Soal">Asesmen & Soal</option>
+                    <option value="LKPD">LKPD Murid</option>
+                </select>
+            </div>
+
+            <!-- File Grid Container -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="file-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: JADWAL & RUNDOWN PERTEMUAN ==================== -->
+        <section id="sec-jadwal" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Jadwal & Rundown Pertemuan Kombel SD</h2>
+                    <p class="text-xs text-slate-500">Panduan susunan acara rapat mingguan Kombel SDN 3 Kuala Pembuang I.</p>
+                </div>
+                <button onclick="openModal('modal-tambah-jadwal')" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Buat Agenda Pertemuan
+                </button>
+            </div>
+
+            <!-- Schedule List -->
+            <div class="space-y-4" id="jadwal-container">
+                <!-- Dynamically Populated -->
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: PRESENSI OTOMATIS ==================== -->
+        <section id="sec-presensi" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Presensi Input Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-base">Isi Daftar Hadir Pertemuan</h3>
+                        <p class="text-xs text-slate-500">Masukkan 6 digit token unik dari Ketua Kombel SD Negeri 3 Kuala Pembuang I</p>
+                    </div>
+
+                    <form onsubmit="submitPresensi(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Nama Guru / Peserta *</label>
+                            <select id="presensi-guru-select" required class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <option value="">-- Pilih Nama Anda --</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Pilih Sesi Kombel Hari Ini *</label>
+                            <select id="presensi-sesi-select" required class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <option value="">-- Pilih Sesi Pertemuan --</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Kode / Token Presensi (6 Digit) *</label>
+                            <input type="text" id="input-token-presensi" required maxlength="6" placeholder="Contoh: KMB789" class="w-full tracking-widest text-center font-mono text-base uppercase font-bold border border-slate-200 rounded-xl py-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Status Kehadiran</label>
+                            <select id="input-status-presensi" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <option value="Hadir">Hadir Tepat Waktu</option>
+                                <option value="Izin">Izin (Dinas Luar / Mengawas)</option>
+                                <option value="Sakit">Sakit</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Catatan / Masukan Sesi Hari Ini</label>
+                            <textarea id="input-catatan-presensi" rows="2" placeholder="Tulis ringkasan ide atau pemahaman materi hari ini..." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 rounded-xl transition shadow-sm">
+                            <i class="fa-solid fa-circle-check mr-1"></i> Kirim Presensi Kehadiran
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Host Panel: Generator Token Presensi -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-md space-y-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="bg-brand-500/20 text-brand-300 border border-brand-500/30 text-[10px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full">Khusus Host / Ketua Kombel</span>
+                                <h3 class="text-base font-bold mt-2">Generator Token Presensi SD</h3>
+                                <p class="text-xs text-slate-400">Buat kode token untuk verifikasi kehadiran bapak/ibu guru saat rapat Kombel berlangsung.</p>
+                            </div>
+                            <button onclick="generateNewToken()" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-arrows-rotate"></i> Acak Token
+                            </button>
+                        </div>
+
+                        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] text-slate-400 uppercase font-semibold">Token Sesi Aktif saat ini</p>
+                                <p class="text-3xl font-mono font-bold tracking-widest text-emerald-400" id="display-token-aktif">KMB789</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-slate-300 font-medium">Status Token: <span class="text-emerald-400 font-bold">AKTIFF</span></p>
+                                <p class="text-[11px] text-slate-400">Berikan ke peserta rapat</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rekapitulasi Presensi Table -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <h3 class="font-bold text-slate-800 text-base">Rekapitulasi Kehadiran Guru SDN 3 Kuala Pembuang I</h3>
+                            <button onclick="downloadPresensiCSV()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300 transition flex items-center gap-1">
+                                <i class="fa-solid fa-file-csv text-emerald-600"></i> Ekspor CSV
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
+                                        <th class="p-3">Nama Guru</th>
+                                        <th class="p-3">Sesi / Topik</th>
+                                        <th class="p-3">Waktu Presensi</th>
+                                        <th class="p-3">Status</th>
+                                        <th class="p-3">Catatan</th>
+                                        <th class="p-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="presensi-table-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 5: REFLEKSI & RTL KOMBEL ==================== -->
+        <section id="sec-refleksi" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Ruang Refleksi & Rencana Tindak Lanjut (RTL) Guru SD</h2>
+                    <p class="text-xs text-slate-500">Wadah gagasan, evaluasi praktik mengajar di kelas, dan aksi nyata tindak lanjut.</p>
+                </div>
+                <button onclick="openModal('modal-tambah-refleksi')" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square"></i> Tulis Refleksi Baru
+                </button>
+            </div>
+
+            <!-- List Refleksi -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="refleksi-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ==================== TAB 6: INFO EDUKASI & BERITA ==================== -->
+        <section id="sec-info" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Kabar Edukasi & Pusat Informasi PMM</h2>
+                    <p class="text-xs text-slate-500">Update Kurikulum Merdeka Sekolah Dasar, Aksi Nyata PMM, dan Berita Dinas Pendidikan.</p>
+                </div>
+                <button onclick="openModal('modal-tambah-info')" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-newspaper"></i> Tambah Berita
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="news-grid">
+                <!-- Dynamically populated news -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modals Section -->
+    
+    <!-- Modal 1: Upload File -->
+    <div id="modal-upload-file" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden animate-fade-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-sm">Unggah Berkas Pembelajaran SD</h3>
+                <button onclick="closeModal('modal-upload-file')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveNewFile(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Nama Pengunggah / Guru *</label>
+                    <select id="up-uploader" required class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <!-- Populated dynamically from guruData -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Judul Dokumen / Perangkat Ajar *</label>
+                    <input type="text" id="up-judul" required placeholder="Contoh: Modul Ajar IPAS Kelas IV Bab 2 - Wujud Zat" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Kategori / Kelas *</label>
+                        <select id="up-mapel" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Guru Kelas (Fase A)">Fase A (Kelas 1-2)</option>
+                            <option value="Guru Kelas (Fase B)">Fase B (Kelas 3-4)</option>
+                            <option value="Guru Kelas (Fase C)">Fase C (Kelas 5-6)</option>
+                            <option value="IPAS SD">IPAS SD</option>
+                            <option value="Matematika SD">Matematika SD</option>
+                            <option value="Bahasa Indonesia SD">Bahasa Indonesia SD</option>
+                            <option value="Pendidikan Pancasila">Pendidikan Pancasila</option>
+                            <option value="PJOK & Agama">PJOK & Agama</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Jenis Dokumen *</label>
+                        <select id="up-jenis" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Modul Ajar / RPP">Modul Ajar / RPP</option>
+                            <option value="Bahan Presentasi">Bahan Presentasi (PPT)</option>
+                            <option value="Asesmen & Soal">Asesmen & Soal (STS/SAS)</option>
+                            <option value="LKPD">LKPD Murid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Format Berkas *</label>
+                        <select id="up-format" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="pdf">PDF (.pdf)</option>
+                            <option value="word">Word (.docx)</option>
+                            <option value="ppt">PowerPoint (.pptx)</option>
+                            <option value="sheet">Excel / Sheet (.xlsx)</option>
+                            <option value="link">Tautan Drive / Cloud</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Ukuran / Info File</label>
+                        <input type="text" id="up-size" placeholder="Misal: 2.1 MB / Link Drive" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Tautan / File Link (Google Drive / Cloud) *</label>
+                    <input type="url" id="up-url" required placeholder="https://drive.google.com/..." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Deskripsi Singkat / Petunjuk Penggunaan</label>
+                    <textarea id="up-deskripsi" rows="2" placeholder="Sebutkan fase/kelas dan catatan singkat..." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('modal-upload-file')" class="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white">Simpan & Bagikan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Presensi Cepat -->
+    <div id="modal-presensi-cepat" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-emerald-600 text-white">
+                <h3 class="font-bold text-sm"><i class="fa-solid fa-qrcode mr-1"></i> Presensi Kehadiran Cepat</h3>
+                <button onclick="closeModal('modal-presensi-cepat')" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-xs text-slate-600">Gunakan token unik aktif dari Ketua Kombel SDN 3 Kuala Pembuang I untuk menandai kehadiran Anda secara instan.</p>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Nama Anda *</label>
+                    <select id="quick-guru" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <!-- Dynamically filled -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Kode Unik / Token *</label>
+                    <input type="text" id="quick-token" placeholder="Masukkan Kode (ex: KMB789)" class="w-full uppercase font-mono text-center tracking-widest text-lg font-bold border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <button onclick="quickPresensiSubmit()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-3 rounded-xl transition">
+                    Konfirmasi Kehadiran
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Rundown Detail Viewer -->
+    <div id="modal-rundown-detail" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xl rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-900 text-white">
+                <div>
+                    <span class="text-[10px] bg-brand-500 text-white font-bold uppercase px-2 py-0.5 rounded">Rundown Sesi Kombel</span>
+                    <h3 class="font-bold text-sm mt-0.5" id="rd-modal-title">Judul Sesi</h3>
+                </div>
+                <button onclick="closeModal('modal-rundown-detail')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto" id="rd-modal-body">
+                <!-- Dynamically filled -->
+            </div>
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('modal-rundown-detail')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 hover:bg-slate-300">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Tambah Refleksi -->
+    <div id="modal-tambah-refleksi" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-sm">Tulis Refleksi & RTL Pembelajaran SD</h3>
+                <button onclick="closeModal('modal-tambah-refleksi')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveRefleksi(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Nama Penulis / Guru *</label>
+                    <select id="ref-penulis" required class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Judul Topik Refleksi *</label>
+                    <input type="text" id="ref-judul" required placeholder="Contoh: Penerapan Media Konkret pada Pembelajaran Pecahan" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Praktik Baik / Hal Positif yang Ditemukan *</label>
+                    <textarea id="ref-positif" rows="2" required placeholder="Apa yang berjalan sangat baik saat mengajar murid di kelas..." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Rencana Tindak Lanjut (RTL) / Solusi Perbaikan *</label>
+                    <textarea id="ref-rtl" rows="2" required placeholder="Langkah konkrit yang akan diterapkan pada minggu berikutnya..." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-tambah-refleksi')" class="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white">Posting Refleksi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 5: Tambah Jadwal -->
+    <div id="modal-tambah-jadwal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-sm">Buat Agenda Pertemuan Kombel</h3>
+                <button onclick="closeModal('modal-tambah-jadwal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveJadwalBaru(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Topik Utama Pertemuan *</label>
+                    <input type="text" id="jdw-topik" required placeholder="Contoh: Penyusunan Rubrik Proyek P5 Tema Gaya Hidup Berkelanjutan" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Tanggal *</label>
+                        <input type="date" id="jdw-tgl" required class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Waktu (Jam) *</label>
+                        <input type="text" id="jdw-jam" required placeholder="11:30 - 13:00 WIB" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Narasumber / Host *</label>
+                        <input type="text" id="jdw-host" required placeholder="Nama Host / Ketua Kombel" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Lokasi / Ruang *</label>
+                        <input type="text" id="jdw-lokasi" required placeholder="Ruang Guru SDN 3 K. Pembuang I" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-tambah-jadwal')" class="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white">Simpan Agenda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 6: Input / Edit Identitas Guru -->
+    <div id="modal-tambah-guru" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden animate-fade-in max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-sm" id="modal-guru-title">Input Identitas Guru / GTK Baru</h3>
+                <button onclick="closeModal('modal-tambah-guru')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveGuru(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="guru-edit-id" value="">
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Nama Lengkap & Gelar *</label>
+                    <input type="text" id="guru-nama" required placeholder="Contoh: Nurlaili Hendriani Taqdiriana, S.Pd." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">NIP / NUPTK</label>
+                        <input type="text" id="guru-nip" placeholder="19850312 ... / -" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Status Kepegawaian *</label>
+                        <select id="guru-status" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="PNS">PNS</option>
+                            <option value="PPPK">PPPK</option>
+                            <option value="GTT / Honorer">GTT / Honorer</option>
+                            <option value="PTT">PTT (Tenaga Kependidikan)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Tugas / Jabatan *</label>
+                        <select id="guru-jabatan" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Kepala Sekolah">Kepala Sekolah</option>
+                            <option value="Guru Kelas I (Fase A)">Guru Kelas I (Fase A)</option>
+                            <option value="Guru Kelas II (Fase A)">Guru Kelas II (Fase A)</option>
+                            <option value="Guru Kelas III (Fase B)">Guru Kelas III (Fase B)</option>
+                            <option value="Guru Kelas IV (Fase B)">Guru Kelas IV (Fase B)</option>
+                            <option value="Guru Kelas V (Fase C)">Guru Kelas V (Fase C)</option>
+                            <option value="Guru Kelas VI (Fase C)">Guru Kelas VI (Fase C)</option>
+                            <option value="Guru PAI SD">Guru Agama Islam (PAI)</option>
+                            <option value="Guru PJOK SD">Guru PJOK</option>
+                            <option value="Guru Bahasa Inggris SD">Guru Bahasa Inggris</option>
+                            <option value="Tenaga Perpustakaan / Admin">Tenaga Perpustakaan / Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Peran di Kombel *</label>
+                        <select id="guru-peran" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Anggota Kombel">Anggota Kombel</option>
+                            <option value="Ketua Kombel">Ketua Kombel</option>
+                            <option value="Sekretaris Kombel">Sekretaris Kombel</option>
+                            <option value="Bendahara Kombel">Bendahara Kombel</option>
+                            <option value="Narasumber Praktik Baik">Narasumber Praktik Baik</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">No. WhatsApp / HP</label>
+                        <input type="tel" id="guru-hp" placeholder="081234567890" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Email Aktif</label>
+                        <input type="email" id="guru-email" placeholder="guru@sdn3kualapembuang1.sch.id" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Keahlian / Fokus Pengembangan Diri</label>
+                    <input type="text" id="guru-keahlian" placeholder="Contoh: Modul IPAS, Pembelajaran Berdiferensiasi, Canva" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-tambah-guru')" class="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white">Simpan Data Guru</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 7: Tambah Info Edukasi -->
+    <div id="modal-tambah-info" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-sm">Tambah Kabar Edukasi / Artikel PMM</h3>
+                <button onclick="closeModal('modal-tambah-info')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveNews(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Judul Artikel / Informasi *</label>
+                    <input type="text" id="info-judul" required placeholder="Contoh: Panduan Aksi Nyata PMM Tahap 2" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Kategori *</label>
+                        <select id="info-kategori" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Info Kemendikbud">Info Kemendikbud</option>
+                            <option value="Tips Mengajar SD">Tips Mengajar SD</option>
+                            <option value="Pengembangan Diri">Pengembangan Diri</option>
+                            <option value="Pengumuman Sekolah">Pengumuman Sekolah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Tautan Gambar (URL Banner)</label>
+                        <input type="url" id="info-gambar" placeholder="https://..." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Ringkasan / Isi Berita *</label>
+                    <textarea id="info-ringkasan" rows="3" required placeholder="Tuliskan poin penting dari informasi ini..." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-tambah-info')" class="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white">Terbitkan Berita</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+        <p>© 2026 SI-KOMBEL SD Negeri 3 Kuala Pembuang I - Sistem Informasi Komunitas Belajar Sekolah Dasar Terpadu.</p>
+        <p class="text-[11px] text-slate-500 mt-1.5 flex items-center justify-center gap-1.5 flex-wrap">
+            <span>Dikembangkan & Dikelola oleh:</span>
+            <span class="font-bold text-slate-800 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                <i class="fa-solid fa-code text-brand-600 mr-1"></i>Nurlaili Hendriani Taqdiriana
+            </span>
+            <span>• Kabupaten Seruyan, Kalimantan Tengah</span>
+        </p>
+    </footer>
+
+    <!-- JavaScript Engine & Persistent Local Storage System -->
+    <script>
+        // Global Token Variable
+        let activeToken = "KMB789";
+
+        // Persistent Data Loaders from LocalStorage (Starts Completely Empty If No Data Exists)
+        let guruData = JSON.parse(localStorage.getItem('kombel_guru')) || [];
+        let filesData = JSON.parse(localStorage.getItem('kombel_files')) || [];
+        let jadwalData = JSON.parse(localStorage.getItem('kombel_jadwal')) || [];
+        let presensiData = JSON.parse(localStorage.getItem('kombel_presensi')) || [];
+        let refleksiData = JSON.parse(localStorage.getItem('kombel_refleksi')) || [];
+        let newsData = JSON.parse(localStorage.getItem('kombel_news')) || [];
+        let activities = JSON.parse(localStorage.getItem('kombel_activities')) || [];
+
+        // Save Function to LocalStorage
+        function saveAllToStorage() {
+            localStorage.setItem('kombel_guru', JSON.stringify(guruData));
+            localStorage.setItem('kombel_files', JSON.stringify(filesData));
+            localStorage.setItem('kombel_jadwal', JSON.stringify(jadwalData));
+            localStorage.setItem('kombel_presensi', JSON.stringify(presensiData));
+            localStorage.setItem('kombel_refleksi', JSON.stringify(refleksiData));
+            localStorage.setItem('kombel_news', JSON.stringify(newsData));
+            localStorage.setItem('kombel_activities', JSON.stringify(activities));
+            
+            updateDropdownOptions();
+            updateDashboardMetrics();
+        }
+
+        // Export and Import Functionality for Sharing Across Devices
+        function exportData() {
+            const fullData = {
+                guru: guruData,
+                files: filesData,
+                jadwal: jadwalData,
+                presensi: presensiData,
+                refleksi: refleksiData,
+                news: newsData,
+                activities: activities
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullData, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `SI_KOMBEL_DATA_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+
+            showToast("Data berhasil diekspor! Bagikan file JSON ini ke rekan guru lain.");
+        }
+
+        function importData(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const importedObj = JSON.parse(e.target.result);
+                    if (importedObj.guru || importedObj.files) {
+                        guruData = importedObj.guru || [];
+                        filesData = importedObj.files || [];
+                        jadwalData = importedObj.jadwal || [];
+                        presensiData = importedObj.presensi || [];
+                        refleksiData = importedObj.refleksi || [];
+                        newsData = importedObj.news || [];
+                        activities = importedObj.activities || [];
+
+                        saveAllToStorage();
+                        refreshAllViews();
+                        showToast("Data berhasil diimpor ke dalam aplikasi!");
+                    } else {
+                        showToast("Format file JSON tidak valid!", "error");
+                    }
+                } catch (err) {
+                    showToast("Gagal membaca file JSON!", "error");
+                }
+            };
+            if (event.target.files[0]) {
+                fileReader.readAsText(event.target.files[0]);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-600', 'text-white', 'font-semibold');
+                btn.classList.add('hover:bg-slate-800', 'hover:text-white');
+            });
+
+            document.getElementById('sec-' + tabId).classList.remove('hidden');
+
+            const activeBtn = document.getElementById('tab-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-brand-600', 'text-white', 'font-semibold');
+                activeBtn.classList.remove('hover:bg-slate-800');
+            }
+
+            if (tabId === 'dashboard') {
+                renderChart();
+            }
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-slate-800';
+            const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
+
+            toast.className = `${bgColor} text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Dynamically Update Select Options across all forms
+        function updateDropdownOptions() {
+            const selectGuruPresensi = document.getElementById('presensi-guru-select');
+            const selectGuruQuick = document.getElementById('quick-guru');
+            const selectGuruUpload = document.getElementById('up-uploader');
+            const selectGuruRefleksi = document.getElementById('ref-penulis');
+
+            const makeOptions = () => {
+                if (guruData.length === 0) {
+                    return `<option value="">Belum Ada Data Guru (Input di Tab Guru)</option>`;
+                }
+                return guruData.map(g => `<option value="${g.nama}">${g.nama} (${g.jabatan})</option>`).join('');
+            };
+
+            if (selectGuruPresensi) selectGuruPresensi.innerHTML = `<option value="">-- Pilih Nama Anda --</option>` + makeOptions();
+            if (selectGuruQuick) selectGuruQuick.innerHTML = makeOptions();
+            if (selectGuruUpload) selectGuruUpload.innerHTML = makeOptions();
+            if (selectGuruRefleksi) selectGuruRefleksi.innerHTML = makeOptions();
+
+            // Set Header user name from first teacher if available
+            if (guruData.length > 0) {
+                const ketua = guruData.find(g => g.peran.includes("Ketua")) || guruData[0];
+                document.getElementById('header-user-name').innerText = ketua.nama;
+            } else {
+                document.getElementById('header-user-name').innerText = "Pengelola Portal";
+            }
+        }
+
+        // Dashboard Visual Metrics Updates
+        function updateDashboardMetrics() {
+            document.getElementById('dash-total-guru').innerText = `${guruData.length} Guru`;
+            document.getElementById('dash-total-jadwal').innerText = `${jadwalData.length} Sesi`;
+            document.getElementById('stat-total-files').innerText = `${filesData.length} Dokumen`;
+            document.getElementById('dash-total-presensi').innerText = `${presensiData.length} Data`;
+
+            // Next Meeting Card update
+            const upcoming = jadwalData.find(j => j.status === "Mendatang");
+            if (upcoming) {
+                document.getElementById('dash-upcoming-topik').innerText = upcoming.topik;
+                document.getElementById('dash-upcoming-time').innerHTML = `<i class="fa-regular fa-clock mr-1"></i> ${upcoming.tgl} | ${upcoming.jam}`;
+                document.getElementById('dash-upcoming-lokasi').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i> ${upcoming.lokasi}`;
+                document.getElementById('dash-upcoming-host').innerText = `Host: ${upcoming.host}`;
+            } else {
+                document.getElementById('dash-upcoming-topik').innerText = "Belum Ada Agenda Mendatang";
+                document.getElementById('dash-upcoming-time').innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Silakan buat agenda baru`;
+                document.getElementById('dash-upcoming-lokasi').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i> -`;
+                document.getElementById('dash-upcoming-host').innerText = `Host: -`;
+            }
+        }
+
+        // Render Files
+        function renderFiles(list = filesData) {
+            const container = document.getElementById('file-grid');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-400">
+                        <i class="fa-solid fa-folder-open text-4xl mb-2"></i>
+                        <p class="text-xs font-semibold">Belum ada perangkat ajar yang diunggah.</p>
+                        <p class="text-[11px] text-slate-400">Klik tombol "Unggah Berkas Baru" untuk mengisi bank berkas.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.forEach(file => {
+                let badgeColor = "bg-blue-100 text-blue-700";
+                let formatIcon = "fa-file-pdf text-red-500";
+
+                if (file.format === 'word') {
+                    formatIcon = "fa-file-word text-blue-600";
+                    badgeColor = "bg-blue-50 text-blue-700";
+                } else if (file.format === 'ppt') {
+                    formatIcon = "fa-file-powerpoint text-amber-600";
+                    badgeColor = "bg-amber-50 text-amber-700";
+                } else if (file.format === 'sheet') {
+                    formatIcon = "fa-file-excel text-emerald-600";
+                    badgeColor = "bg-emerald-50 text-emerald-700";
+                } else if (file.format === 'link') {
+                    formatIcon = "fa-link text-indigo-600";
+                    badgeColor = "bg-indigo-50 text-indigo-700";
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${badgeColor}">
+                                ${file.mapel}
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-medium">${file.tgl}</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid ${formatIcon} text-2xl mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-xs leading-snug line-clamp-2">${file.judul}</h4>
+                                <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${file.deskripsi || 'Tidak ada deskripsi.'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-[10px] font-bold text-brand-700">
+                                ${(file.uploader || 'G').charAt(0)}
+                            </div>
+                            <span class="text-[11px] text-slate-600 font-medium truncate max-w-[120px]">${file.uploader || 'Guru'}</span>
+                        </div>
+
+                        <div class="flex items-center gap-1">
+                            <a href="${file.url}" target="_blank" class="bg-slate-100 hover:bg-brand-600 hover:text-white text-slate-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                                <i class="fa-solid fa-download"></i> Buka
+                            </a>
+                            <button onclick="deleteFile(${file.id})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterFiles() {
+            const search = document.getElementById('search-file').value.toLowerCase();
+            const mapel = document.getElementById('filter-mapel').value;
+            const format = document.getElementById('filter-format').value;
+            const jenis = document.getElementById('filter-jenis').value;
+
+            const filtered = filesData.filter(f => {
+                const matchSearch = f.judul.toLowerCase().includes(search) || (f.uploader && f.uploader.toLowerCase().includes(search));
+                const matchMapel = mapel === 'ALL' || f.mapel === mapel;
+                const matchFormat = format === 'ALL' || f.format === format;
+                const matchJenis = jenis === 'ALL' || f.jenis === jenis;
+
+                return matchSearch && matchMapel && matchFormat && matchJenis;
+            });
+
+            renderFiles(filtered);
+        }
+
+        function saveNewFile(e) {
+            e.preventDefault();
+            const newFile = {
+                id: Date.now(),
+                uploader: document.getElementById('up-uploader').value || 'Guru SDN 3',
+                judul: document.getElementById('up-judul').value,
+                mapel: document.getElementById('up-mapel').value,
+                jenis: document.getElementById('up-jenis').value,
+                format: document.getElementById('up-format').value,
+                tgl: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                size: document.getElementById('up-size').value || "1.5 MB",
+                url: document.getElementById('up-url').value,
+                deskripsi: document.getElementById('up-deskripsi').value
+            };
+
+            filesData.unshift(newFile);
+            saveAllToStorage();
+            renderFiles();
+            closeModal('modal-upload-file');
+            showToast("Berkas baru berhasil ditambahkan!");
+            addActivityFeed(newFile.uploader, `Mengunggah berkas: ${newFile.judul}`, "fa-file-arrow-up text-brand-600");
+        }
+
+        function deleteFile(id) {
+            if (confirm("Hapus dokumen ini dari Bank Perangkat Ajar?")) {
+                filesData = filesData.filter(f => f.id !== id);
+                saveAllToStorage();
+                renderFiles();
+                showToast("Berkas telah dihapus.");
+            }
+        }
+
+        // Render Presensi
+        function renderPresensiTable() {
+            const tbody = document.getElementById('presensi-table-body');
+            tbody.innerHTML = '';
+
+            if (presensiData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="p-6 text-center text-slate-400">Belum ada rekapitulasi kehadiran yang diisi.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            presensiData.forEach(p => {
+                let statusBadge = "bg-emerald-100 text-emerald-700";
+                if (p.status === 'Izin') statusBadge = "bg-amber-100 text-amber-700";
+                if (p.status === 'Sakit') statusBadge = "bg-rose-100 text-rose-700";
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-slate-800">${p.nama}</td>
+                    <td class="p-3 text-slate-500">${p.sesiTopik || 'Sesi Kombel'}</td>
+                    <td class="p-3 text-slate-500 font-mono">${p.waktu}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusBadge}">
+                            ${p.status}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-500 max-w-xs truncate">${p.catatan || '-'}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deletePresensi(${p.id})" class="text-slate-400 hover:text-rose-600 transition">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function generateNewToken() {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            let code = "KMB";
+            for (let i = 0; i < 3; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            activeToken = code;
+            document.getElementById('display-token-aktif').innerText = code;
+            showToast(`Token presensi baru berhasil dibuat: ${code}`);
+        }
+
+        function submitPresensi(e) {
+            e.preventDefault();
+            const nama = document.getElementById('presensi-guru-select').value;
+            const sesiId = document.getElementById('presensi-sesi-select').value;
+            const tokenInput = document.getElementById('input-token-presensi').value.trim().toUpperCase();
+            const status = document.getElementById('input-status-presensi').value;
+            const catatan = document.getElementById('input-catatan-presensi').value;
+
+            if (tokenInput !== activeToken) {
+                showToast("Kode token presensi tidak valid / salah!", "error");
+                return;
+            }
+
+            const sesiObj = jadwalData.find(j => j.id == sesiId);
+            const sesiTopik = sesiObj ? sesiObj.topik : "Sesi Kombel";
+
+            const now = new Date();
+            const timeStr = `${now.toLocaleDateString('id-ID')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
+
+            presensiData.unshift({
+                id: Date.now(),
+                nama: nama,
+                sesiTopik: sesiTopik,
+                waktu: timeStr,
+                status: status,
+                catatan: catatan
+            });
+
+            saveAllToStorage();
+            renderPresensiTable();
+            showToast("Presensi kehadiran berhasil dicatat!");
+            addActivityFeed(nama, `Mengisi presensi kehadiran: ${sesiTopik}`, "fa-user-check text-emerald-600");
+        }
+
+        function quickPresensiSubmit() {
+            const nama = document.getElementById('quick-guru').value;
+            const tokenInput = document.getElementById('quick-token').value.trim().toUpperCase();
+            
+            if (!nama) {
+                showToast("Pilih nama Anda terlebih dahulu!", "error");
+                return;
+            }
+            if (tokenInput !== activeToken) {
+                showToast("Kode token presensi salah!", "error");
+                return;
+            }
+
+            closeModal('modal-presensi-cepat');
+            
+            const now = new Date();
+            const timeStr = `${now.toLocaleDateString('id-ID')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
+
+            presensiData.unshift({
+                id: Date.now(),
+                nama: nama,
+                sesiTopik: "Presensi Cepat",
+                waktu: timeStr,
+                status: "Hadir",
+                catatan: "Presensi instan via modul modal"
+            });
+
+            saveAllToStorage();
+            renderPresensiTable();
+            showToast("Presensi cepat berhasil dikonfirmasi!");
+            addActivityFeed(nama, "Mengisi presensi cepat", "fa-user-check text-emerald-600");
+        }
+
+        function deletePresensi(id) {
+            if (confirm("Hapus baris presensi ini?")) {
+                presensiData = presensiData.filter(p => p.id !== id);
+                saveAllToStorage();
+                renderPresensiTable();
+                showToast("Presensi dihapus.");
+            }
+        }
+
+        function downloadPresensiCSV() {
+            if (presensiData.length === 0) {
+                showToast("Tidak ada data presensi untuk diekspor", "error");
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,Nama,Sesi,Waktu,Status,Catatan\n";
+            presensiData.forEach(row => {
+                csvContent += `"${row.nama}","${row.sesiTopik}","${row.waktu}","${row.status}","${row.catatan || ''}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `REKAP_PRESENSI_KOMBEL_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        // Render Jadwal
+        function renderJadwal() {
+            const container = document.getElementById('jadwal-container');
+            const selectSesi = document.getElementById('presensi-sesi-select');
+
+            container.innerHTML = '';
+            if (selectSesi) selectSesi.innerHTML = '<option value="">-- Pilih Sesi Pertemuan --</option>';
+
+            if (jadwalData.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white p-8 text-center text-slate-400 rounded-2xl border border-slate-200">
+                        <i class="fa-solid fa-calendar-xmark text-4xl mb-2"></i>
+                        <p class="text-xs font-semibold">Belum ada agenda pertemuan yang dibuat.</p>
+                        <p class="text-[11px] text-slate-400">Klik "Buat Agenda Pertemuan" untuk menambahkan jadwal rapat baru.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            jadwalData.forEach(item => {
+                if (selectSesi) {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.innerText = `${item.tgl} - ${item.topik}`;
+                    selectSesi.appendChild(opt);
+                }
+
+                let statusColor = item.status === 'Mendatang' ? 'bg-brand-100 text-brand-700 border-brand-200' : 'bg-slate-100 text-slate-600 border-slate-200';
+
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusColor}">
+                                ${item.status}
+                            </span>
+                            <span class="text-xs text-slate-500 font-medium"><i class="fa-regular fa-calendar mr-1"></i> ${item.tgl}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800 text-base">${item.topik}</h3>
+                        <div class="flex flex-wrap gap-4 text-xs text-slate-500 pt-1">
+                            <span><i class="fa-regular fa-clock text-slate-400 mr-1"></i> ${item.jam}</span>
+                            <span><i class="fa-solid fa-user-tie text-slate-400 mr-1"></i> Host: ${item.host}</span>
+                            <span><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i> ${item.lokasi}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <button onclick="viewRundown(${item.id})" class="flex-1 md:flex-none bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-list-check"></i> Rundown Sesi
+                        </button>
+                        <button onclick="toggleJadwalStatus(${item.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 rounded-xl text-xs" title="Tandai Selesai / Mendatang">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                        <button onclick="deleteJadwal(${item.id})" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2.5 rounded-xl text-xs" title="Hapus Agenda">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function viewRundown(id) {
+            const item = jadwalData.find(j => j.id === id);
+            if (!item) return;
+
+            document.getElementById('rd-modal-title').innerText = item.topik;
+            const body = document.getElementById('rd-modal-body');
+            body.innerHTML = '';
+
+            if (!item.rundown || item.rundown.length === 0) {
+                body.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Belum ada rincian rundown.</p>';
+            } else {
+                item.rundown.forEach((r) => {
+                    const row = document.createElement('div');
+                    row.className = "flex items-start gap-4 p-3 rounded-xl bg-slate-50 border border-slate-100";
+                    row.innerHTML = `
+                        <div class="bg-brand-600 text-white text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg whitespace-nowrap">
+                            ${r.jam}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-slate-800 text-xs">${r.kegiatan}</h4>
+                            <p class="text-[11px] text-slate-500">Penanggung Jawab: <span class="font-medium text-slate-700">${r.pjs}</span></p>
+                        </div>
+                    `;
+                    body.appendChild(row);
+                });
+            }
+
+            openModal('modal-rundown-detail');
+        }
+
+        function saveJadwalBaru(e) {
+            e.preventDefault();
+            const hostVal = document.getElementById('jdw-host').value;
+            const newJadwal = {
+                id: Date.now(),
+                topik: document.getElementById('jdw-topik').value,
+                tgl: document.getElementById('jdw-tgl').value,
+                jam: document.getElementById('jdw-jam').value,
+                host: hostVal,
+                lokasi: document.getElementById('jdw-lokasi').value,
+                status: "Mendatang",
+                rundown: [
+                    { jam: "Awal Sesi", kegiatan: "Pembukaan & Refleksi Pertemuan Kombel", pjs: hostVal },
+                    { jam: "Inti Sesi", kegiatan: "Pembahasan Topik Utama & Sharing Praktik Baik", pjs: "Peserta Rapat" },
+                    { jam: "Akhir Sesi", kegiatan: "Penyusunan Rencana Tindak Lanjut & Penutup", pjs: hostVal }
+                ]
+            };
+
+            jadwalData.unshift(newJadwal);
+            saveAllToStorage();
+            renderJadwal();
+            closeModal('modal-tambah-jadwal');
+            showToast("Agenda Pertemuan Kombel Baru Disimpan!");
+            addActivityFeed(hostVal, `Membuat agenda baru: ${newJadwal.topik}`, "fa-calendar-plus text-indigo-600");
+        }
+
+        function toggleJadwalStatus(id) {
+            const j = jadwalData.find(item => item.id === id);
+            if (j) {
+                j.status = j.status === 'Mendatang' ? 'Selesai' : 'Mendatang';
+                saveAllToStorage();
+                renderJadwal();
+                showToast(`Status agenda diubah menjadi ${j.status}`);
+            }
+        }
+
+        function deleteJadwal(id) {
+            if (confirm("Hapus agenda pertemuan ini?")) {
+                jadwalData = jadwalData.filter(j => j.id !== id);
+                saveAllToStorage();
+                renderJadwal();
+                showToast("Agenda dihapus.");
+            }
+        }
+
+        // Render Refleksi
+        function renderRefleksi() {
+            const container = document.getElementById('refleksi-grid');
+            container.innerHTML = '';
+
+            if (refleksiData.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+                        <i class="fa-solid fa-comments text-4xl mb-2"></i>
+                        <p class="text-xs font-semibold">Belum ada catatan refleksi & RTL.</p>
+                        <p class="text-[11px] text-slate-400">Klik "Tulis Refleksi Baru" untuk membagikan pengalaman mengajar.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            refleksiData.forEach(r => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-xs">
+                                    ${(r.penulis || 'G').charAt(0)}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-xs text-slate-800">${r.penulis}</h4>
+                                    <p class="text-[10px] text-slate-400">${r.tgl}</p>
+                                </div>
+                            </div>
+                            <button onclick="deleteRefleksi(${r.id})" class="text-slate-300 hover:text-rose-600 transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+
+                        <h3 class="font-bold text-slate-800 text-sm">${r.judul}</h3>
+
+                        <div class="space-y-2 bg-slate-50 p-3 rounded-xl text-xs border border-slate-100">
+                            <div>
+                                <span class="font-semibold text-emerald-700 block text-[11px]"><i class="fa-solid fa-thumbs-up mr-1"></i> Praktik Baik / Positif:</span>
+                                <p class="text-slate-600 mt-0.5">${r.positif}</p>
+                            </div>
+                            <div class="pt-2 border-t border-slate-200">
+                                <span class="font-semibold text-brand-700 block text-[11px]"><i class="fa-solid fa-bullseye mr-1"></i> Rencana Tindak Lanjut (RTL):</span>
+                                <p class="text-slate-600 mt-0.5">${r.rtl}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function saveRefleksi(e) {
+            e.preventDefault();
+            const penulisVal = document.getElementById('ref-penulis').value || "Guru SD";
+            const newRef = {
+                id: Date.now(),
+                penulis: penulisVal,
+                tgl: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                judul: document.getElementById('ref-judul').value,
+                positif: document.getElementById('ref-positif').value,
+                rtl: document.getElementById('ref-rtl').value
+            };
+
+            refleksiData.unshift(newRef);
+            saveAllToStorage();
+            renderRefleksi();
+            closeModal('modal-tambah-refleksi');
+            showToast("Refleksi berhasil diterbitkan!");
+            addActivityFeed(penulisVal, `Menulis refleksi: ${newRef.judul}`, "fa-comments text-purple-600");
+        }
+
+        function deleteRefleksi(id) {
+            if (confirm("Hapus catatan refleksi ini?")) {
+                refleksiData = refleksiData.filter(r => r.id !== id);
+                saveAllToStorage();
+                renderRefleksi();
+                showToast("Refleksi dihapus.");
+            }
+        }
+
+        // News Render
+        function renderNews() {
+            const container = document.getElementById('news-grid');
+            container.innerHTML = '';
+
+            if (newsData.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+                        <i class="fa-solid fa-newspaper text-4xl mb-2"></i>
+                        <p class="text-xs font-semibold">Belum ada berita atau kabar edukasi.</p>
+                        <p class="text-[11px] text-slate-400">Klik "Tambah Berita" untuk mempublikasikan berita baru.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            newsData.forEach(n => {
+                const imgUrl = n.gambar || "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&auto=format&fit=crop&q=80";
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <img src="${imgUrl}" alt="News" class="w-full h-40 object-cover">
+                        <div class="p-5 space-y-2">
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full">${n.kategori}</span>
+                                <span class="text-slate-400">${n.tgl}</span>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm leading-snug">${n.judul}</h3>
+                            <p class="text-xs text-slate-500 line-clamp-3">${n.ringkasan}</p>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-5 pt-2 flex justify-between items-center">
+                        <span class="text-[11px] text-slate-400 font-medium">Portal Edukasi Kombel</span>
+                        <button onclick="deleteNews(${n.id})" class="text-slate-400 hover:text-rose-600 transition p-1">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function saveNews(e) {
+            e.preventDefault();
+            const newNews = {
+                id: Date.now(),
+                judul: document.getElementById('info-judul').value,
+                kategori: document.getElementById('info-kategori').value,
+                gambar: document.getElementById('info-gambar').value,
+                tgl: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                ringkasan: document.getElementById('info-ringkasan').value
+            };
+
+            newsData.unshift(newNews);
+            saveAllToStorage();
+            renderNews();
+            closeModal('modal-tambah-info');
+            showToast("Berita edukasi baru berhasil diterbitkan!");
+        }
+
+        function deleteNews(id) {
+            if (confirm("Hapus artikel/berita ini?")) {
+                newsData = newsData.filter(n => n.id !== id);
+                saveAllToStorage();
+                renderNews();
+                showToast("Berita dihapus.");
+            }
+        }
+
+        // Teacher Directory Logic
+        function renderGuru(list = guruData) {
+            const container = document.getElementById('guru-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+                        <i class="fa-solid fa-user-slash text-4xl mb-2"></i>
+                        <p class="text-xs font-semibold">Belum ada data Guru / GTK.</p>
+                        <p class="text-[11px] text-slate-400">Klik "Tambah Identitas Guru" untuk mengisi direktori guru sekolah Anda.</p>
+                    </div>
+                `;
+                updateGuruStats();
+                return;
+            }
+
+            list.forEach(g => {
+                let badgeStatus = "bg-emerald-100 text-emerald-700";
+                if (g.status === 'PPPK') badgeStatus = "bg-blue-100 text-blue-700";
+                if (g.status === 'GTT / Honorer') badgeStatus = "bg-amber-100 text-amber-700";
+                if (g.status === 'PTT') badgeStatus = "bg-purple-100 text-purple-700";
+
+                let roleBadge = "bg-slate-100 text-slate-600";
+                if (g.peran === 'Ketua Kombel') roleBadge = "bg-brand-600 text-white font-bold";
+                if (g.peran === 'Sekretaris Kombel') roleBadge = "bg-indigo-100 text-indigo-700 font-semibold";
+
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-brand-50 border border-brand-200 text-brand-700 flex items-center justify-center font-bold text-sm shadow-sm">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-xs leading-snug">${g.nama}</h3>
+                                    <p class="text-[11px] text-slate-500 font-medium">${g.jabatan}</p>
+                                </div>
+                            </div>
+                            <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full ${badgeStatus}">
+                                ${g.status}
+                            </span>
+                        </div>
+
+                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-1">
+                            <p class="text-slate-600"><span class="text-slate-400">NIP/NUPTK:</span> <span class="font-mono font-medium">${g.nip || '-'}</span></p>
+                            <p class="text-slate-600"><span class="text-slate-400">Kontak:</span> ${g.hp ? `<i class="fa-brands fa-whatsapp text-emerald-600 ml-1"></i> ${g.hp}` : '-'}</p>
+                            ${g.keahlian ? `<p class="text-slate-600"><span class="text-slate-400">Fokus:</span> ${g.keahlian}</p>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-[10px] px-2.5 py-1 rounded-lg ${roleBadge}">
+                            <i class="fa-solid fa-award mr-1"></i> ${g.peran}
+                        </span>
+
+                        <div class="flex items-center gap-1">
+                            <button onclick="editGuru(${g.id})" class="text-slate-500 hover:text-brand-600 p-1.5 rounded-lg hover:bg-slate-100 transition" title="Edit Data">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteGuru(${g.id})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Hapus Data">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            updateGuruStats();
+        }
+
+        function filterGuru() {
+            const search = document.getElementById('search-guru').value.toLowerCase();
+            const status = document.getElementById('filter-guru-status').value;
+
+            const filtered = guruData.filter(g => {
+                const matchSearch = g.nama.toLowerCase().includes(search) || 
+                                    (g.nip && g.nip.toLowerCase().includes(search)) || 
+                                    g.jabatan.toLowerCase().includes(search);
+                const matchStatus = status === 'ALL' || g.status === status;
+                return matchSearch && matchStatus;
+            });
+
+            renderGuru(filtered);
+        }
+
+        function updateGuruStats() {
+            document.getElementById('stat-guru-total').innerText = `${guruData.length} Guru`;
+            const asn = guruData.filter(g => g.status === 'PNS' || g.status === 'PPPK').length;
+            const gtt = guruData.filter(g => g.status === 'GTT / Honorer').length;
+            const pengurus = guruData.filter(g => g.peran && (g.peran.includes('Ketua') || g.peran.includes('Sekretaris') || g.peran.includes('Bendahara'))).length;
+
+            document.getElementById('stat-guru-asn').innerText = `${asn} Orang`;
+            document.getElementById('stat-guru-gtt').innerText = `${gtt} Orang`;
+            document.getElementById('stat-guru-pengurus').innerText = `${pengurus} Orang`;
+        }
+
+        function openModalTambahGuru() {
+            document.getElementById('guru-edit-id').value = '';
+            document.getElementById('modal-guru-title').innerText = 'Input Identitas Guru / GTK Baru';
+            document.getElementById('guru-nama').value = '';
+            document.getElementById('guru-nip').value = '';
+            document.getElementById('guru-status').value = 'PNS';
+            document.getElementById('guru-jabatan').value = 'Guru Kelas IV (Fase B)';
+            document.getElementById('guru-peran').value = 'Anggota Kombel';
+            document.getElementById('guru-hp').value = '';
+            document.getElementById('guru-email').value = '';
+            document.getElementById('guru-keahlian').value = '';
+
+            openModal('modal-tambah-guru');
+        }
+
+        function editGuru(id) {
+            const g = guruData.find(item => item.id === id);
+            if (!g) return;
+
+            document.getElementById('guru-edit-id').value = g.id;
+            document.getElementById('modal-guru-title').innerText = 'Edit Identitas Guru / GTK';
+            document.getElementById('guru-nama').value = g.nama;
+            document.getElementById('guru-nip').value = g.nip || '';
+            document.getElementById('guru-status').value = g.status;
+            document.getElementById('guru-jabatan').value = g.jabatan;
+            document.getElementById('guru-peran').value = g.peran;
+            document.getElementById('guru-hp').value = g.hp || '';
+            document.getElementById('guru-email').value = g.email || '';
+            document.getElementById('guru-keahlian').value = g.keahlian || '';
+
+            openModal('modal-tambah-guru');
+        }
+
+        function saveGuru(e) {
+            e.preventDefault();
+            const editId = document.getElementById('guru-edit-id').value;
+
+            const guruObj = {
+                id: editId ? parseInt(editId) : Date.now(),
+                nama: document.getElementById('guru-nama').value,
+                nip: document.getElementById('guru-nip').value || '-',
+                status: document.getElementById('guru-status').value,
+                jabatan: document.getElementById('guru-jabatan').value,
+                peran: document.getElementById('guru-peran').value,
+                hp: document.getElementById('guru-hp').value,
+                email: document.getElementById('guru-email').value,
+                keahlian: document.getElementById('guru-keahlian').value
+            };
+
+            if (editId) {
+                const index = guruData.findIndex(item => item.id === parseInt(editId));
+                if (index !== -1) guruData[index] = guruObj;
+                showToast("Identitas guru berhasil diperbarui!");
+            } else {
+                guruData.unshift(guruObj);
+                showToast("Data Guru baru berhasil ditambahkan!");
+                addActivityFeed("Admin Kombel", `Menambahkan guru: ${guruObj.nama}`, "fa-user-plus text-brand-600");
+            }
+
+            saveAllToStorage();
+            renderGuru();
+            closeModal('modal-tambah-guru');
+        }
+
+        function deleteGuru(id) {
+            if (confirm("Hapus data guru ini dari direktori?")) {
+                guruData = guruData.filter(g => g.id !== id);
+                saveAllToStorage();
+                renderGuru();
+                showToast("Data guru dihapus.");
+            }
+        }
+
+        // Activity Feed Live
+        function renderActivityFeed() {
+            const container = document.getElementById('dashboard-activity-list');
+            container.innerHTML = '';
+
+            if (activities.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Belum ada rekam aktivitas terbaru.</p>';
+                return;
+            }
+
+            activities.slice(0, 8).forEach(a => {
+                const item = document.createElement('div');
+                item.className = "relative pl-8";
+                item.innerHTML = `
+                    <div class="absolute left-2 top-0 transform -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-brand-500 flex items-center justify-center"></div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <h5 class="text-xs font-bold text-slate-800">${a.user}</h5>
+                            <span class="text-[10px] text-slate-400">${a.time}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1 flex items-center gap-1.5">
+                            <i class="fa-solid ${a.icon}"></i> ${a.action}
+                        </p>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function addActivityFeed(user, action, icon) {
+            activities.unshift({
+                user: user,
+                action: action,
+                time: "Baru saja",
+                icon: icon
+            });
+            saveAllToStorage();
+            renderActivityFeed();
+        }
+
+        // Dynamic Chart Render
+        function renderChart() {
+            const ctx = document.getElementById('chartPartisipasi');
+            if (!ctx) return;
+
+            if (window.myChart) {
+                window.myChart.destroy();
+            }
+
+            // Calculate counts from actual files
+            const countA = filesData.filter(f => f.mapel.includes('Fase A')).length;
+            const countB = filesData.filter(f => f.mapel.includes('Fase B')).length;
+            const countC = filesData.filter(f => f.mapel.includes('Fase C')).length;
+            const countOther = filesData.length - (countA + countB + countC);
+
+            window.myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Fase A (Kl 1-2)', 'Fase B (Kl 3-4)', 'Fase C (Kl 5-6)', 'Mapel Lain'],
+                    datasets: [{
+                        data: [countA || 1, countB || 1, countC || 1, countOther || 1],
+                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function refreshAllViews() {
+            renderGuru();
+            renderFiles();
+            renderJadwal();
+            renderPresensiTable();
+            renderRefleksi();
+            renderNews();
+            renderActivityFeed();
+            renderChart();
+            updateDropdownOptions();
+            updateDashboardMetrics();
+        }
+
+        // Initial Load Event
+        window.onload = function() {
+            refreshAllViews();
+        };
+    </script>
+</body>
+</html>
